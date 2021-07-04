@@ -1,14 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	"bytes"
+	"encoding/gob"
 	"log"
-	"net"
 	"sync"
-)
 
-type Message interface{}
+	"go.nanomsg.org/mangos/v3/protocol/rep"
+	"go.nanomsg.org/mangos/v3/protocol/req"
+
+	_ "go.nanomsg.org/mangos/v3/transport/all"
+)
 
 // The Node encapsulates the information we are interested in replicating. It also
 // communicates with other nodes which it knows of, so as to replicate data with them too.
@@ -29,57 +31,57 @@ func NewNode(knownNeighbours []string, socket string) Node {
 }
 
 // An infinite! procedure that listens on the socket
-// Pass all values sent to Node.Messages channel
-func (N *Node) Listen(socket string, messages chan<- Message, wg *sync.WaitGroup) error {
+// All values sent are passed onto the messages channel
+func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup) error {
 	defer wg.Done()
-	listener, err := net.Listen("tcp", N.socket)
-	if err != nil { // if listener could not be set up, consider this a fatal error
+	lSocket, err := rep.NewSocket() // listenSocket
+	if err != nil {                 // If the node fails to establish a socket to listen on, this is fatal
 		log.Fatalln(err)
 	}
-	defer listener.Close()
-	for { // infinite loop accepts all connections
-		conn, err := listener.Accept()
-		log.Println("connection accepted")
-		defer conn.Close()
-		if err != nil { // if there is a connection error, log it, but it's not fatal
+	lSocket.Listen(socket)
+	for {
+		bs, err := lSocket.Recv()
+		if err != nil { // failed to read bytes, maybe not be fatal, so don't panic
 			log.Println(err)
 		}
-		go func() { // run this piece of code concurrently:
-			for { // accept all messages from the new connection
-				msg, err := bufio.NewReader(conn).ReadString('\n')
-				if err != nil { // if bufio returns an error, it was the last message
-					break
-				}
-				log.Printf("Listener got the message: %s", msg)
-				messages <- msg // send the message into the node's messages channel
-			}
-		}()
+		// Decode gob structure and send it on messages channel
+		reader := bytes.NewReader(bs)
+		decoder := gob.NewDecoder(reader)
+		var msg Rumour
+		decoder.Decode(&msg)
+		messages <- msg
 	}
 }
 
-func (N *Node) Send(neighbour, message string) error {
-	conn, err := net.Dial("tcp", neighbour)
-	defer conn.Close()
-	if err != nil { // the node might be down, log and return
-		log.Println(err)
+// Given a neighbour and a rumour, send the rumour to that neighbour.
+// Does not select a random neigbour or cycle.
+func (N *Node) Send(neighbour string, message Rumour) error {
+	sSocket, err := req.NewSocket() // sendSocket
+	if err != nil {                 // failed to establish a socket
+		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
-	_, err = fmt.Fprintln(conn, message)
-	if err != nil { // error on sending to node, unsure of reasons, log and exit
-		log.Println(err)
+	sSocket.Dial(neighbour)
+	// turn the message into bytes to be sent over the network as gob data
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	encoder.Encode(message)
+	err = sSocket.Send(buffer.Bytes())
+	if err != nil { // sending the bytes failed
+		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
-	return nil // finished with no errors
+	return nil
 }
 
 // infinite!
 func (N *Node) Gossip() error {
 	var wg sync.WaitGroup // wait for all the concurrent procedures to finish before returning
-	messages := make(chan Message)
+	messages := make(chan Rumour)
 	wg.Add(1)
 	go N.Listen(N.socket, messages, &wg)
 	for {
-		m := <-messages
-		log.Printf("got the message: %s\n", m)
+		msg := <-messages
+		log.Printf("key: %s\nval: %s\n", msg.Key, msg.NewValue)
 	}
 }
