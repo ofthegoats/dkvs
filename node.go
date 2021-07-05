@@ -55,7 +55,7 @@ func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup)
 
 // Given a neighbour and a rumour, send the rumour to that neighbour.
 // Does not select a random neigbour or cycle.
-func (N *Node) Send(neighbour string, message Rumour) error {
+func (N *Node) Send(neighbour string, rumour Rumour) error {
 	sSocket, err := req.NewSocket() // sendSocket
 	if err != nil {                 // failed to establish a socket
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
@@ -65,9 +65,13 @@ func (N *Node) Send(neighbour string, message Rumour) error {
 	// turn the message into bytes to be sent over the network as gob data
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	encoder.Encode(message)
-	err = sSocket.Send(buffer.Bytes())
-	if err != nil { // sending the bytes failed
+	err = encoder.Encode(rumour)
+	if err != nil { // failed to encode, do not send
+		log.Println(err)
+		return err
+	}
+	err = sSocket.Send(buffer.Bytes()) // TODO: set timeout before here
+	if err != nil {                    // sending the bytes failed
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
