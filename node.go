@@ -82,6 +82,13 @@ func (N *Node) Gossip() error {
 	go N.Listen(N.socket, messages, &wg)
 	for {
 		msg := <-messages
-		log.Printf("key: %s\nval: %s\n", msg.Key, msg.NewValue)
+		// Update the value stored in the node
+		oldValue := N.Data[msg.Key]
+		N.Data[msg.Key] = msg.NewValue // Change the existing value, or make a new one
+		log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, msg.Key, oldValue, msg.NewValue)
+		if msg.T < len(N.Neighbours) { // TODO: should use log
+			msg.T++
+			N.Send(N.Neighbours[0], msg) // TODO: should be random
+		}
 	}
 }
