@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"math"
+	"math/rand"
 	"sync"
 
 	"go.nanomsg.org/mangos/v3/protocol/rep"
@@ -19,14 +21,24 @@ type Node struct {
 	Neighbours []string          // List of all known nodes/neighbours.
 
 	socket string // The socket on which this node listens
+
+	// the number of rounds should be log_b len(Neighbours) + c
+	b int // the number of nodes sent to each round
+	c int // small configurable value, seeking to make consensus more likely
 }
 
 // Construct a new Node
-func NewNode(knownNeighbours []string, socket string) Node {
+// knownNeighbours is the neighbours is starts of knowing
+// socket is the socket it listens on
+// b is the number of nodes it should send to each round
+// c is the number added to the number of rounds, which should improve probability of consensus
+func NewNode(knownNeighbours []string, socket string, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
 	n.socket = socket
+	n.b = b
+	n.c = c
 	return n
 }
 
@@ -84,15 +96,26 @@ func (N *Node) Gossip() error {
 	messages := make(chan Rumour)
 	wg.Add(1)
 	go N.Listen(N.socket, messages, &wg)
+	maxRounds := int(math.Log(float64(len(N.Neighbours)))/math.Log(float64(N.b))) + N.c // floor (log_b N + c) using base change
+	log.Printf("maxRounds = %d", maxRounds)
 	for {
 		msg := <-messages
 		// Update the value stored in the node
 		oldValue := N.Data[msg.Key]
 		N.Data[msg.Key] = msg.NewValue // Change the existing value, or make a new one
 		log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, msg.Key, oldValue, msg.NewValue)
-		if msg.T < len(N.Neighbours) { // TODO: should use log
-			msg.T++
-			N.Send(N.Neighbours[0], msg) // TODO: should be random
+		if msg.T <= maxRounds {
+			msg.T++ // increment the round on the message by one
+			for i := 0; i < N.b; i++ {
+				neighbour := N.GetRandomNeighbour()
+				log.Printf("%s is sending to %s", N.socket, neighbour)
+				N.Send(neighbour, msg)
+			}
 		}
 	}
+}
+
+func (N *Node) GetRandomNeighbour() string {
+	i := rand.Intn(len(N.Neighbours))
+	return N.Neighbours[i]
 }
