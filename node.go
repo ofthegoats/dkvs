@@ -7,7 +7,9 @@ import (
 	"math"
 	"math/rand"
 	"sync"
+	"time"
 
+	"go.nanomsg.org/mangos/v3"
 	"go.nanomsg.org/mangos/v3/protocol/rep"
 	"go.nanomsg.org/mangos/v3/protocol/req"
 
@@ -19,6 +21,7 @@ import (
 type Node struct {
 	Data       map[string]string // The core part of the Key-Value store, a dictionary.
 	Neighbours []string          // List of all known nodes/neighbours.
+	Timeout    time.Duration
 
 	socket string // The socket on which this node listens
 
@@ -32,10 +35,11 @@ type Node struct {
 // socket is the socket it listens on
 // b is the number of nodes it should send to each round
 // c is the number added to the number of rounds, which should improve probability of consensus
-func NewNode(knownNeighbours []string, socket string, b, c int) Node {
+func NewNode(knownNeighbours []string, socket string, timeout time.Duration, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
+	n.Timeout = timeout
 	n.socket = socket
 	n.b = b
 	n.c = c
@@ -69,7 +73,8 @@ func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup)
 // Does not select a random neigbour or cycle.
 func (N *Node) Send(neighbour string, rumour Rumour) error {
 	sSocket, err := req.NewSocket() // sendSocket
-	if err != nil {                 // failed to establish a socket
+	sSocket.SetOption(mangos.OptionSendDeadline, N.Timeout)
+	if err != nil { // failed to establish a socket
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
@@ -82,8 +87,8 @@ func (N *Node) Send(neighbour string, rumour Rumour) error {
 		log.Println(err)
 		return err
 	}
-	err = sSocket.Send(buffer.Bytes()) // TODO: set timeout before here
-	if err != nil {                    // sending the bytes failed
+	err = sSocket.Send(buffer.Bytes())
+	if err != nil { // sending the bytes failed
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
