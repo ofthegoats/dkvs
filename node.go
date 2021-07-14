@@ -101,21 +101,28 @@ func (N *Node) Gossip() error {
 	messages := make(chan Rumour)
 	wg.Add(1)
 	go N.Listen(N.socket, messages, &wg)
+	wg.Add(1)
+	go N.RTTTimer(N.Timeout)
 	maxRounds := int(math.Log(float64(len(N.Neighbours)))/math.Log(float64(N.b))) + N.c // floor (log_b N + c) using base change
 	log.Printf("maxRounds = %d", maxRounds)
 	for {
 		msg := <-messages
-		// Update the value stored in the node
-		oldValue := N.Data[msg.Key]
-		N.Data[msg.Key] = msg.NewValue // Change the existing value, or make a new one
-		log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, msg.Key, oldValue, msg.NewValue)
-		if msg.T <= maxRounds {
-			msg.T++ // increment the round on the message by one
-			for i := 0; i < N.b; i++ {
-				neighbour := N.GetRandomNeighbour()
-				log.Printf("%s is sending to %s", N.socket, neighbour)
-				N.Send(neighbour, msg)
+		switch msg.RequestType {
+		case UpdateData:
+			// Update the value stored in the node
+			oldValue := N.Data[msg.Key]
+			N.Data[msg.Key] = msg.NewValue // Change the existing value, or make a new one
+			log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, msg.Key, oldValue, msg.NewValue)
+			if msg.T <= maxRounds {
+				msg.T++ // increment the round on the message by one
+				for i := 0; i < N.b; i++ {
+					neighbour := N.GetRandomNeighbour()
+					log.Printf("%s is sending to %s", N.socket, neighbour)
+					N.Send(neighbour, msg)
+				}
 			}
+		case RTTRequest:
+			// Respond to the RTT Request
 		}
 	}
 }
@@ -123,4 +130,20 @@ func (N *Node) Gossip() error {
 func (N *Node) GetRandomNeighbour() string {
 	i := rand.Intn(len(N.Neighbours))
 	return N.Neighbours[i]
+}
+
+// Every `period` amount of time, send an RTT to a random node.
+// Follows up the RTT if the SendRTT returns true
+func (N *Node) RTTTimer(period time.Duration) error {
+	RTTRumour := Rumour{
+		RequestType: RTTRequest,
+	}
+	for {
+		time.Sleep(period)
+		RTTTarget := N.GetRandomNeighbour()
+		err := N.Send(RTTTarget, RTTRumour)
+		if err != nil {
+			// TODO: send a request to some neighbours, see if they also can't reach the node.
+		}
+	}
 }

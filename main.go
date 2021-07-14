@@ -13,7 +13,12 @@ func main() {
 	go m.Gossip()
 	time.Sleep(1 * time.Second)
 
-	r1 := NewRumour("key1", "val1")
+	r1 := Rumour{
+		RequestType: UpdateData,
+		Key:         "key1",
+		NewValue:    "val1",
+		T:           0,
+	}
 	n.Send("tcp://127.0.0.1:9998", r1) // socket DOES exist
 	n.Send("tcp://127.0.0.1:9997", r1) // socket does not exist
 	n.Send("tcp://127.0.0.1:9996", r1) // socket does not exist
