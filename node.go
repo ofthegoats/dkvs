@@ -121,8 +121,6 @@ func (N *Node) Gossip() error {
 					N.Send(neighbour, msg)
 				}
 			}
-		case RTTRequest:
-			// Respond to the RTT Request
 		}
 	}
 }
