@@ -73,11 +73,11 @@ func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup)
 // Does not select a random neigbour or cycle.
 func (N *Node) Send(neighbour string, rumour Rumour) error {
 	sSocket, err := req.NewSocket() // sendSocket
-	sSocket.SetOption(mangos.OptionSendDeadline, N.Timeout)
-	if err != nil { // failed to establish a socket
+	if err != nil {                 // failed to establish a socket
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
 	}
+	sSocket.SetOption(mangos.OptionSendDeadline, N.Timeout)
 	sSocket.Dial(neighbour)
 	// turn the message into bytes to be sent over the network as gob data
 	var buffer bytes.Buffer
