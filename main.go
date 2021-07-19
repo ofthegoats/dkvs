@@ -6,10 +6,10 @@ import (
 )
 
 func main() {
-	n := NewNode([]string{"tcp://127.0.0.1:9999"}, "tcp://127.0.0.1:9998", 1*time.Second, 2, 1)
+	n := NewNode([]string{"tcp://127.0.0.1:9999"}, "tcp://127.0.0.1:9998", 2*time.Second, 1*time.Second, 2, 1)
 	go n.Gossip()
 	time.Sleep(1 * time.Second)
-	m := NewNode([]string{"tcp://127.0.0.1:9998"}, "tcp://127.0.0.1:9999", 1*time.Second, 2, 1)
+	m := NewNode([]string{"tcp://127.0.0.1:9998"}, "tcp://127.0.0.1:9999", 2*time.Second, 1*time.Second, 2, 1)
 	go m.Gossip()
 	time.Sleep(1 * time.Second)
 

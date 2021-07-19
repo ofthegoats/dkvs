@@ -22,6 +22,7 @@ type Node struct {
 	Data       map[string]string // The core part of the Key-Value store, a dictionary.
 	Neighbours []string          // List of all known nodes/neighbours.
 	Timeout    time.Duration
+	RTTPeriod  time.Duration
 
 	socket string // The socket on which this node listens
 
@@ -35,11 +36,12 @@ type Node struct {
 // socket is the socket it listens on
 // b is the number of nodes it should send to each round
 // c is the number added to the number of rounds, which should improve probability of consensus
-func NewNode(knownNeighbours []string, socket string, timeout time.Duration, b, c int) Node {
+func NewNode(knownNeighbours []string, socket string, timeout time.Duration, period time.Duration, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
 	n.Timeout = timeout
+	n.RTTPeriod = period
 	n.socket = socket
 	n.b = b
 	n.c = c
@@ -102,7 +104,7 @@ func (N *Node) Gossip() error {
 	wg.Add(1)
 	go N.Listen(N.socket, messages, &wg)
 	wg.Add(1)
-	go N.RTTTimer(N.Timeout)
+	go N.RTTTimer(N.RTTPeriod)
 	maxRounds := int(math.Log(float64(len(N.Neighbours)))/math.Log(float64(N.b))) + N.c // floor (log_b N + c) using base change
 	log.Printf("maxRounds = %d", maxRounds)
 	for {
