@@ -19,4 +19,6 @@ type Rumour struct {
 	T        int    // The current round this rumour comes from
 
 	RTTTarget string // If another node is suspicious, fill this with the suspcious socket
+
+	Sender string // Shows what node to respond to
 }

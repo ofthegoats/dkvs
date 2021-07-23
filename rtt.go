@@ -1,12 +1,15 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 // Every `period` amount of time, send an RTT to a random node.
-// Follows up the RTT if the SendRTT returns true
+// Follows up the RTT if Send returns an error.
 func (N *Node) RTTTimer(period time.Duration) error {
 	RTTRumour := Rumour{
 		RequestType: RTTRequest,
+		Sender:      N.socket,
 	}
 	for {
 		time.Sleep(period)
