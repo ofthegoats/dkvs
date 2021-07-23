@@ -23,6 +23,7 @@ type Node struct {
 	Neighbours []string          // List of all known nodes/neighbours.
 	Timeout    time.Duration
 	RTTPeriod  time.Duration
+	MaxRounds  int
 
 	socket string // The socket on which this node listens
 
@@ -45,6 +46,7 @@ func NewNode(knownNeighbours []string, socket string, timeout time.Duration, per
 	n.socket = socket
 	n.b = b
 	n.c = c
+	n.MaxRounds = int(math.Log(float64(len(n.Neighbours)))/math.Log(float64(n.b))) + n.c // floor (log_b N + c) using base change
 	return n
 }
 
@@ -105,24 +107,29 @@ func (N *Node) Gossip() error {
 	go N.Listen(N.socket, messages, &wg)
 	wg.Add(1)
 	go N.RTTTimer(N.RTTPeriod)
-	maxRounds := int(math.Log(float64(len(N.Neighbours)))/math.Log(float64(N.b))) + N.c // floor (log_b N + c) using base change
-	log.Printf("maxRounds = %d", maxRounds)
 	for {
 		msg := <-messages
 		switch msg.RequestType {
 		case UpdateData:
-			// Update the value stored in the node
-			oldValue := N.Data[msg.Key]
-			N.Data[msg.Key] = msg.NewValue // Change the existing value, or make a new one
-			log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, msg.Key, oldValue, msg.NewValue)
-			if msg.T <= maxRounds {
-				msg.T++ // increment the round on the message by one
-				for i := 0; i < N.b; i++ {
-					neighbour := N.GetRandomNeighbour()
-					log.Printf("%s is sending to %s", N.socket, neighbour)
-					N.Send(neighbour, msg)
-				}
-			}
+			N.UpdateData(msg.Key, msg.NewValue)
+			N.SendNextRound(msg)
+		}
+	}
+}
+
+func (N *Node) UpdateData(key, newvalue string) {
+	oldValue := N.Data[key]
+	N.Data[key] = newvalue // Change the existing value, or make a new one
+	log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, key, oldValue, newvalue)
+}
+
+func (N *Node) SendNextRound(msg Rumour) {
+	if msg.T <= N.MaxRounds {
+		msg.T++ // increment the round on the message by one
+		for i := 0; i < N.b; i++ {
+			neighbour := N.GetRandomNeighbour()
+			log.Printf("%s is sending to %s", N.socket, neighbour)
+			N.Send(neighbour, msg)
 		}
 	}
 }
