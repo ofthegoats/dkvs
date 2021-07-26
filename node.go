@@ -104,14 +104,27 @@ func (N *Node) Gossip() error {
 	messages := make(chan Rumour)
 	wg.Add(1)
 	go N.Listen(N.socket, messages, &wg)
+	RTTChan := make(chan bool)
 	wg.Add(1)
-	go N.RTTTimer(N.RTTPeriod)
+	go N.RTTTimer(N.RTTPeriod, RTTChan)
 	for {
 		msg := <-messages
 		switch msg.RequestType {
 		case UpdateData:
 			N.UpdateData(msg.Key, msg.NewValue)
 			N.SendNextRound(msg)
+		case RTTForward:
+			err := N.Send(msg.RTTTarget, Rumour{
+				RequestType: RTTRequest,
+				Sender:      N.socket,
+			})
+			N.Send(msg.Sender, Rumour{
+				RequestType: RTTForwardResponse,
+				Sender:      N.socket,
+				RTTResponse: err != nil,
+			})
+		case RTTForwardResponse:
+			RTTChan <- msg.RTTResponse
 		}
 	}
 }
