@@ -33,7 +33,7 @@ func (N *Node) RTTTimer(period time.Duration, RTTChan chan bool) error {
 					suspiciousCount++
 				}
 			}
-			if suspiciousCount >= len(N.Neighbours)-1 {
+			if 2*suspiciousCount >= len(N.Neighbours)-1 {
 				log.Printf("%s: node %s marked as suspicious\n", N.socket, RTTTarget)
 				// TODO: mark that node as suspicious
 				// cut communications with it and flag an error showing this
