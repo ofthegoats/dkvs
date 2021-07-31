@@ -17,7 +17,8 @@ func (N *Node) UpdateData(key, newvalue string) {
 
 func (N *Node) SendNextRound(msg Rumour) {
 	if msg.T <= N.MaxRounds {
-		msg.T++ // increment the round on the message by one
+		msg.T++               // increment the round on the message by one
+		N.Send(N.socket, msg) // send to self to continue loop
 		for i := 0; i < N.b; i++ {
 			neighbour := N.GetRandomNeighbour()
 			log.Printf("%s is sending to %s", N.socket, neighbour)
