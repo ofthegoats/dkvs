@@ -24,7 +24,7 @@ func (N *Node) RTTTimer(period time.Duration, RTTChan chan bool) error {
 				if neighbour == RTTTarget { // we don't check with the failing node
 					continue
 				}
-				N.RTTForward(RTTTarget, neighbour)
+				err = N.RTTForward(RTTTarget, neighbour)
 				if err != nil { // request was not successful, next node
 					continue
 				}
