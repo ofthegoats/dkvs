@@ -33,10 +33,17 @@ func (N *Node) RTTTimer(period time.Duration, RTTChan chan bool) error {
 					suspiciousCount++
 				}
 			}
+			// if a majority of the requested nodes say RTTTarget is suspicious
 			if 2*suspiciousCount >= len(N.Neighbours)-1 {
 				log.Printf("%s: node %s marked as suspicious\n", N.socket, RTTTarget)
-				// TODO: mark that node as suspicious
-				// cut communications with it and flag an error showing this
+				suspicionRumour := Rumour{
+					RequestType: SuspiciousNode,
+					RTTTarget:   RTTTarget,
+					T:           0,
+				}
+				// send to self, hack that lets us get this to Gossip() easily, just with localhost
+				N.Send(N.socket, suspicionRumour)
+                // TODO: tell that node to turn itself off
 			}
 		}
 	}

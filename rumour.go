@@ -16,6 +16,11 @@ const (
 	// RTTForwardResponse is a value to be used for RequestType
 	// It is used to send the result for an RTTForward Request
 	RTTForwardResponse = "RTT-FORWARD-RESPONSE"
+
+    // SuspiciousNode is a value to be used for RequestType
+    // It is used to say that a node is suspicious, therefore should be removed from the
+    // receiving node's list of neighbours.
+    SuspiciousNode = "MARK-NODE-SUSPICIOUS"
 )
 
 // The primary data structure which is communicated between Nodes

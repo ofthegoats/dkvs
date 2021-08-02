@@ -6,12 +6,16 @@ import (
 )
 
 func main() {
-	n := NewNode([]string{"tcp://127.0.0.1:9999", "tcp://localhost:9996"}, "tcp://127.0.0.1:9998", 1*time.Second, 2*time.Second, 2, 1)
+	n := NewNode([]string{"tcp://127.0.0.1:9999", "tcp://localhost:9996"}, "tcp://127.0.0.1:9998", 1*time.Second, 20*time.Second, 2, 10)
 	go n.Gossip()
 	time.Sleep(1 * time.Second)
-	m := NewNode([]string{"tcp://127.0.0.1:9998"}, "tcp://127.0.0.1:9999", 1*time.Second, 2*time.Second, 2, 1)
+
+	m := NewNode([]string{"tcp://127.0.0.1:9998"}, "tcp://127.0.0.1:9999", 1*time.Second, 20*time.Second, 2, 10)
 	go m.Gossip()
 	time.Sleep(1 * time.Second)
+
+    log.Printf("%s: maxrounds = %d\n", n.socket, n.MaxRounds)
+    log.Printf("%s: maxrounds = %d\n", m.socket, m.MaxRounds)
 
 	r1 := Rumour{
 		RequestType: UpdateData,
@@ -25,9 +29,9 @@ func main() {
 
 	time.Sleep(1 * time.Second) // give time to catch up
 
-	log.Printf("%v\n", n.Data)
-	log.Printf("%v\n", m.Data)
-
 	for {
+	log.Printf("%s: %v\n", n.socket, n.Data)
+	log.Printf("%s: %v\n", m.socket, m.Data)
+	time.Sleep(5 * time.Second)
 	}
 }
