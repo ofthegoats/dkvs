@@ -43,7 +43,6 @@ func (N *Node) RTTTimer(period time.Duration, RTTChan chan bool) error {
 				}
 				// send to self, hack that lets us get this to Gossip() easily, just with localhost
 				N.Send(N.socket, suspicionRumour)
-                // TODO: tell that node to turn itself off
 			}
 		}
 	}
