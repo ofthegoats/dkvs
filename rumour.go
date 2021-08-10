@@ -17,23 +17,34 @@ const (
 	// It is used to send the result for an RTTForward Request
 	RTTForwardResponse = "RTT-FORWARD-RESPONSE"
 
-    // SuspiciousNode is a value to be used for RequestType
-    // It is used to say that a node is suspicious, therefore should be removed from the
-    // receiving node's list of neighbours.
-    SuspiciousNode = "MARK-NODE-SUSPICIOUS"
+	// SuspiciousNode is a value to be used for RequestType
+	// It is used to say that a node is suspicious, therefore should be removed from the
+	// receiving node's list of neighbours.
+	SuspiciousNode = "MARK-NODE-SUSPICIOUS"
+
+	// FullStateCopyRequest is a value to be used for RequestType
+	// It is used to ask a node for a full state copy, i.e. copy its data map over one's
+	// own. This is used (a) when a node joins the network and (b) randomly for
+	// convergence
+	FullStateCopyRequest = "FSC-REQUEST"
+
+	// FullStateCopyResponse is a value to be used for RequestType
+	// It is used when responding to a node which as requested a full state copy. Requests
+	// which use this type must make use the of the FullState value in the Rumour.
+	FullStateCopyResponse = "FSC-RESPONSE"
 )
 
 // The primary data structure which is communicated between Nodes
 type Rumour struct {
 	RequestType string // What type of rumour this is, e.g. update data, RTT request ...
+	Sender      string // Shows what node to respond to
 
 	Key      string // The key of the piece of data to be updated
 	NewValue string // The new value of the piece of data to be updated
 	T        int    // The current round this rumour comes from
 
-	RTTTarget string // If another node is suspicious, fill this with the suspcious socket
+	RTTTarget   string // If another node is suspicious, fill this with the suspcious socket
+	RTTResponse bool   // true if suspcious, else false
 
-	RTTResponse bool // true if suspcious, else false
-
-	Sender string // Shows what node to respond to
+	FullState map[string]string // The full state of the data map, to be used for FSCs
 }
