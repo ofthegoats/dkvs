@@ -20,8 +20,9 @@ import (
 type Node struct {
 	Data       map[string]string // The core part of the Key-Value store, a dictionary.
 	Neighbours []string          // List of all known nodes/neighbours.
-	Timeout    time.Duration
-	RTTPeriod  time.Duration
+	Timeout    time.Duration     // how long to wait before a TCP request is dropped as a fail
+	RTTPeriod  time.Duration     // how long to wait before doing an RTT
+	FSCPeriod  time.Duration     // how long to wait before doing a full state copy
 	MaxRounds  int
 
 	socket string // The socket on which this node listens
@@ -34,14 +35,16 @@ type Node struct {
 // Construct a new Node
 // knownNeighbours is the neighbours is starts of knowing
 // socket is the socket it listens on
+// each period is described in the Rumour structure
 // b is the number of nodes it should send to each round
 // c is the number added to the number of rounds, which should improve probability of consensus
-func NewNode(knownNeighbours []string, socket string, timeout time.Duration, period time.Duration, b, c int) Node {
+func NewNode(knownNeighbours []string, socket string, timeout, rttperiod, fscperiod time.Duration, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
 	n.Timeout = timeout
-	n.RTTPeriod = period
+	n.RTTPeriod = rttperiod
+	n.FSCPeriod = fscperiod
 	n.socket = socket
 	n.b = b
 	n.c = c
