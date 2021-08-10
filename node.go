@@ -110,6 +110,8 @@ func (N *Node) Gossip() error {
 	RTTChan := make(chan bool)
 	wg.Add(1)
 	go N.RTTTimer(N.RTTPeriod, RTTChan)
+	wg.Add(1)
+	go N.FullStateCopyTimer(N.FSCPeriod)
 	for {
 		msg := <-messages
 		switch msg.RequestType {
@@ -131,6 +133,14 @@ func (N *Node) Gossip() error {
 		case SuspiciousNode:
 			N.RemoveNeighbour(msg.RTTTarget)
 			N.SendNextRound(msg)
+		case FullStateCopyRequest:
+			N.Send(msg.Sender, Rumour{
+				RequestType: FullStateCopyResponse,
+				Sender:      N.socket,
+				FullState:   N.Data,
+			})
+		case FullStateCopyResponse:
+			N.Data = msg.FullState
 		}
 	}
 }
