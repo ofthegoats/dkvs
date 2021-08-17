@@ -1,4 +1,4 @@
-module github.com/PioKozi/dkvs
+module github.com/ofthegoats/dkvs
 
 go 1.16
 
