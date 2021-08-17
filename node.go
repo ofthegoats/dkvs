@@ -2,7 +2,11 @@ package main
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/gob"
+	"io"
 	"log"
 	"math"
 	"sync"
@@ -27,9 +31,27 @@ type Node struct {
 
 	socket string // The socket on which this node listens
 
+	key []byte // key used for AES cryptgraphy
+
 	// the number of rounds should be log_b len(Neighbours) + c
 	b int // the number of nodes sent to each round
 	c int // small configurable value, seeking to make consensus more likely
+}
+
+func EncryptAES(key, plaintext []byte) []byte {
+	c, _ := aes.NewCipher(key)
+	gcm, _ := cipher.NewGCM(c)
+	nonce := make([]byte, gcm.NonceSize())
+	io.ReadFull(rand.Reader, nonce) // fill nonce with cryptographically secure random sequence
+	return gcm.Seal(nonce, nonce, plaintext, nil)
+}
+
+func DecryptAES(key, ciphertext []byte) []byte {
+	c, _ := aes.NewCipher(key)
+	gcm, _ := cipher.NewGCM(c)
+	nonce, ciphertext := ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():]
+	plaintext, _ := gcm.Open(nil, nonce, ciphertext, nil)
+	return plaintext
 }
 
 // Construct a new Node
@@ -38,7 +60,7 @@ type Node struct {
 // each period is described in the Rumour structure
 // b is the number of nodes it should send to each round
 // c is the number added to the number of rounds, which should improve probability of consensus
-func NewNode(knownNeighbours []string, socket string, timeout, rttperiod, fscperiod time.Duration, b, c int) Node {
+func NewNode(knownNeighbours []string, socket string, key []byte, timeout, rttperiod, fscperiod time.Duration, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
@@ -46,6 +68,7 @@ func NewNode(knownNeighbours []string, socket string, timeout, rttperiod, fscper
 	n.RTTPeriod = rttperiod
 	n.FSCPeriod = fscperiod
 	n.socket = socket
+	n.key = key
 	n.b = b
 	n.c = c
 	n.MaxRounds = int(math.Log(float64(len(n.Neighbours)))/math.Log(float64(n.b))) + n.c // floor (log_b N + c) using base change
@@ -62,15 +85,19 @@ func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup)
 	}
 	lSocket.Listen(socket)
 	for {
-		bs, err := lSocket.Recv()
+		encrypted_bs, err := lSocket.Recv()
 		if err != nil { // failed to read bytes, maybe not be fatal, so don't panic
 			log.Println(err)
 		}
+		bs := DecryptAES(N.key, encrypted_bs)
 		// Decode gob structure and send it on messages channel
 		reader := bytes.NewReader(bs)
 		decoder := gob.NewDecoder(reader)
 		var msg Rumour
-		decoder.Decode(&msg)
+		err = decoder.Decode(&msg)
+		if err != nil { // if decoding failed, decryption must be wrong, implying message was not for this node
+			continue
+		}
 		messages <- msg
 	}
 }
@@ -93,7 +120,8 @@ func (N *Node) Send(neighbour string, rumour Rumour) error {
 		log.Println(err)
 		return err
 	}
-	err = sSocket.Send(buffer.Bytes())
+	encrypted_buffer := EncryptAES(N.key, buffer.Bytes())
+	err = sSocket.Send(encrypted_buffer)
 	if err != nil { // sending the bytes failed
 		log.Println(err) // not fatal for whole program, but does mean this method failed.
 		return err
