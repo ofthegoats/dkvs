@@ -9,7 +9,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"sync"
 	"time"
 
 	"go.nanomsg.org/mangos/v3"
@@ -77,8 +76,7 @@ func NewNode(knownNeighbours []string, socket string, key []byte, timeout, rttpe
 
 // An infinite! procedure that listens on the socket
 // All values sent are passed onto the messages channel
-func (N *Node) Listen(socket string, messages chan<- Rumour, wg *sync.WaitGroup) error {
-	defer wg.Done()
+func (N *Node) Listen(socket string, messages chan<- Rumour) error {
 	lSocket, err := rep.NewSocket() // listenSocket
 	if err != nil {                 // If the node fails to establish a socket to listen on, this is fatal
 		log.Fatalln(err)
@@ -131,14 +129,10 @@ func (N *Node) Send(neighbour string, rumour Rumour) error {
 
 // infinite!
 func (N *Node) Gossip() error {
-	var wg sync.WaitGroup // wait for all the concurrent procedures to finish before returning
 	messages := make(chan Rumour)
-	wg.Add(1)
-	go N.Listen(N.socket, messages, &wg)
+	go N.Listen(N.socket, messages)
 	RTTChan := make(chan bool)
-	wg.Add(1)
 	go N.RTTTimer(N.RTTPeriod, RTTChan)
-	wg.Add(1)
 	go N.FullStateCopyTimer(N.FSCPeriod)
 	for {
 		msg := <-messages
