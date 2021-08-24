@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -13,16 +14,16 @@ import (
 func (N *Node) UpdateData(key, newvalue string) {
 	oldValue := N.Data[key]
 	N.Data[key] = newvalue // Change the existing value, or make a new one
-	log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", N.socket, key, oldValue, newvalue)
+	log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), key, oldValue, newvalue)
 }
 
 func (N *Node) SendNextRound(msg Rumour) {
 	if msg.T <= N.MaxRounds {
 		msg.T++               // increment the round on the message by one
-		N.Send(N.socket, msg) // send to self to continue loop
+        N.Send(fmt.Sprintf("tcp://127.0.0.1:%d", N.Port), msg) // send to self to continue loop, send via loopback address
 		for i := 0; i < N.b; i++ {
 			neighbour := N.GetRandomNeighbour()
-			log.Printf("%s is sending to %s", N.socket, neighbour)
+            log.Printf("%s is sending to %s", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 			N.Send(neighbour, msg)
 		}
 	}
@@ -39,7 +40,7 @@ func (N *Node) RemoveNeighbour(neighbour string) {
 		}
 	}
 	if found == false { // the neigbour to be removed does not exist
-		log.Printf("%s: asked to remove neighbour %s which does not exist\n", N.socket, neighbour)
+        log.Printf("%s: asked to remove neighbour %s which does not exist\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 	} else {
 		// swap the neighbour to be removed with the first, then remove the first
 		// we can do this because order does not matter

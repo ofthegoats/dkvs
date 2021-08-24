@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/gob"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -28,7 +29,8 @@ type Node struct {
 	FSCPeriod  time.Duration     // how long to wait before doing a full state copy
 	MaxRounds  int
 
-	socket string // The socket on which this node listens
+	LANIP string // The local IP for the node
+	Port  int    // The port which the node listens on
 
 	key []byte // key used for AES cryptgraphy
 
@@ -59,14 +61,15 @@ func DecryptAES(key, ciphertext []byte) []byte {
 // each period is described in the Rumour structure
 // b is the number of nodes it should send to each round
 // c is the number added to the number of rounds, which should improve probability of consensus
-func NewNode(knownNeighbours []string, socket string, key []byte, timeout, rttperiod, fscperiod time.Duration, b, c int) Node {
+func NewNode(knownNeighbours []string, IP string, key []byte, timeout, rttperiod, fscperiod time.Duration, portNumber, b, c int) Node {
 	var n Node
 	n.Data = make(map[string]string)
 	n.Neighbours = knownNeighbours
 	n.Timeout = timeout
 	n.RTTPeriod = rttperiod
 	n.FSCPeriod = fscperiod
-	n.socket = socket
+	n.LANIP = IP
+	n.Port = portNumber
 	n.key = key
 	n.b = b
 	n.c = c
@@ -130,7 +133,8 @@ func (N *Node) Send(neighbour string, rumour Rumour) error {
 // infinite!
 func (N *Node) Gossip() error {
 	messages := make(chan Rumour)
-	go N.Listen(N.socket, messages)
+	listenerSocket := fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port)
+	go N.Listen(listenerSocket, messages)
 	RTTChan := make(chan bool)
 	go N.RTTTimer(N.RTTPeriod, RTTChan)
 	go N.FullStateCopyTimer(N.FSCPeriod)
@@ -143,11 +147,11 @@ func (N *Node) Gossip() error {
 		case RTTForward:
 			err := N.Send(msg.RTTTarget, Rumour{
 				RequestType: RTTRequest,
-				Sender:      N.socket,
+				Sender:      listenerSocket,
 			})
 			N.Send(msg.Sender, Rumour{
 				RequestType: RTTForwardResponse,
-				Sender:      N.socket,
+				Sender:      listenerSocket,
 				RTTResponse: err != nil,
 			})
 		case RTTForwardResponse:
@@ -158,7 +162,7 @@ func (N *Node) Gossip() error {
 		case FullStateCopyRequest:
 			N.Send(msg.Sender, Rumour{
 				RequestType: FullStateCopyResponse,
-				Sender:      N.socket,
+				Sender:      listenerSocket,
 				FullState:   N.Data,
 			})
 		case FullStateCopyResponse:

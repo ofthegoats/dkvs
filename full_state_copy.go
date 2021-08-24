@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -9,11 +10,11 @@ import (
 func (N *Node) RequestCopy(neighbour string) error {
 	requestRumour := Rumour{
 		RequestType: FullStateCopyRequest,
-		Sender:      N.socket,
+		Sender:      fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port),
 	}
 	err := N.Send(neighbour, requestRumour)
 	if err != nil { // failed from this neighbour, not fatal but return error
-		log.Printf("%s: Failed to request FSC from %s\n", N.socket, neighbour)
+        log.Printf("%s: Failed to request FSC from %s\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 		return err
 	}
 	return nil
