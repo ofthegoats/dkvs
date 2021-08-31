@@ -5,11 +5,26 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
 )
+
+func (N *Node) UpdateJson() {
+	file, err := json.Marshal(N.Data)
+	if err != nil {
+		log.Printf("%s: could not write JSON to file\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port))
+		return
+	}
+	err = ioutil.WriteFile("data.json", file, 0644)
+	if err != nil {
+		log.Printf("%s: could not write JSON to file\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port))
+		return
+	}
+}
 
 func (N *Node) UpdateData(key, newvalue string) {
 	oldValue := N.Data[key]
@@ -19,11 +34,11 @@ func (N *Node) UpdateData(key, newvalue string) {
 
 func (N *Node) SendNextRound(msg Rumour) {
 	if msg.T <= N.MaxRounds {
-		msg.T++               // increment the round on the message by one
-        N.Send(fmt.Sprintf("tcp://127.0.0.1:%d", N.Port), msg) // send to self to continue loop, send via loopback address
+		msg.T++                                                // increment the round on the message by one
+		N.Send(fmt.Sprintf("tcp://127.0.0.1:%d", N.Port), msg) // send to self to continue loop, send via loopback address
 		for i := 0; i < N.b; i++ {
 			neighbour := N.GetRandomNeighbour()
-            log.Printf("%s is sending to %s", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
+			log.Printf("%s is sending to %s", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 			N.Send(neighbour, msg)
 		}
 	}
@@ -40,7 +55,7 @@ func (N *Node) RemoveNeighbour(neighbour string) {
 		}
 	}
 	if found == false { // the neigbour to be removed does not exist
-        log.Printf("%s: asked to remove neighbour %s which does not exist\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
+		log.Printf("%s: asked to remove neighbour %s which does not exist\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 	} else {
 		// swap the neighbour to be removed with the first, then remove the first
 		// we can do this because order does not matter

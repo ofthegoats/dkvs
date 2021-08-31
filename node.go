@@ -142,7 +142,10 @@ func (N *Node) Gossip() error {
 		msg := <-messages
 		switch msg.RequestType {
 		case UpdateData:
-			N.UpdateData(msg.Key, msg.NewValue)
+			if N.Data[msg.Key] != msg.NewValue {
+				N.UpdateData(msg.Key, msg.NewValue)
+				N.UpdateJson()
+			}
 			N.SendNextRound(msg)
 		case RTTForward:
 			err := N.Send(msg.RTTTarget, Rumour{
@@ -166,7 +169,9 @@ func (N *Node) Gossip() error {
 				FullState:   N.Data,
 			})
 		case FullStateCopyResponse:
+			// Go does not support != between maps
 			N.Data = msg.FullState
+			N.UpdateJson()
 		}
 	}
 }
