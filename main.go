@@ -9,8 +9,8 @@ import (
 
 func main() {
 	tcptimeout := 1 * time.Second
-	rttperiod := 60 * time.Second
-	fscperiod := 2 * time.Second // low, for testing
+	rttperiod := 300 * time.Second
+	fscperiod := 300 * time.Second
 	key := make([]byte, 32)
 	io.ReadFull(rand.Reader, key)
 	n := NewNode(
