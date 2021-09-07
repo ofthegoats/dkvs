@@ -1,20 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
 
-/*
-TODO: implement these commands
-
-dkvs-front $port set $value $key
-dkvs-front $port list-neighbours
-dkvs-front $port add-neighbour $neighbour
-dkvs-front $port remove-neighbour $neighbour
-dkvs-front $port die
-
-no need for list-values, as these are all in a json file anyway
-
-put this stuff into the report when you have time.
-*/
+	. "github.com/ofthegoats/dkvs/dkvs-back"
+)
 
 func main() {
 	fmt.Println("placeholder")
