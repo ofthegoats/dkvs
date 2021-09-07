@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"io"
-	"log"
 	"time"
 )
 
@@ -14,14 +13,13 @@ func main() {
 	key := make([]byte, 32)
 	io.ReadFull(rand.Reader, key)
 	n := NewNode(
-        []string{}, "localhost",
+		[]string{}, "localhost",
 		key,
 		tcptimeout, rttperiod, fscperiod,
 		9999, 5, 2,
 	)
 	go n.Gossip()
 	for {
-        log.Printf("%s:%d: %v, %v\n", n.LANIP, n.Port, n.Data, n.Neighbours)
-		time.Sleep(5 * time.Second)
+		// inelegant infinite loop, replace with workgroups TODO
 	}
 }
