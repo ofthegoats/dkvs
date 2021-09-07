@@ -13,6 +13,7 @@ import (
 	"math/rand"
 )
 
+// Update the data present in data.json
 func (N *Node) UpdateJson() {
 	file, err := json.Marshal(N.Data)
 	if err != nil {
