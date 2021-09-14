@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"net/http"
 	"time"
 
 	"go.nanomsg.org/mangos/v3"
@@ -133,11 +134,13 @@ func (N *Node) Send(neighbour string, rumour Rumour) error {
 // infinite!
 func (N *Node) Gossip() error {
 	messages := make(chan Rumour)
+	RTTChan := make(chan bool)
 	listenerSocket := fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port)
 	go N.Listen(listenerSocket, messages)
-	RTTChan := make(chan bool)
 	go N.RTTTimer(N.RTTPeriod, RTTChan)
 	go N.FullStateCopyTimer(N.FSCPeriod)
+	http.HandleFunc("/", N.webHandler)
+	go http.ListenAndServe(":8080", nil) // by default the webserver runs on port 8080
 	for {
 		msg := <-messages
 		switch msg.RequestType {
