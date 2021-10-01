@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <!-- refresh page every five seconds -->
+    <meta http-equiv="refresh" content="7" ; URL="http://localhost:8080" />
+    <title>Information</title>
+  </head>
+  <body>
+    <p>The information shown is from: {{ .Time }}</p>
+
+    <p>The data on the node is: {{ .Data }}</p>
+
+    <p>The node's neighbours are: {{ .Neighbours }}</p>
+
+    <p>Here change a key and value</p>
+    <form method="POST" accept-charset="utf-8">
+      <label>Key</label><input type="text" name="form_key" />
+      <label>Value</label><input type="text" name="form_value" />
+      <input type="submit" value="Submit Form" />
+    </form>
+  </body>
+</html>
