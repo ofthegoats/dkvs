@@ -99,6 +99,7 @@ func (N *Node) Listen(socket string, messages chan<- Rumour) error {
 		var msg Rumour
 		err = decoder.Decode(&msg)
 		if err != nil { // if decoding failed, decryption must be wrong, implying message was not for this node
+			log.Println("rumour decryption failed")
 			continue
 		}
 		messages <- msg
@@ -165,6 +166,7 @@ func (N *Node) Gossip() error {
 			N.RemoveNeighbour(msg.RTTTarget)
 			N.SendNextRound(msg)
 		case FullStateCopyRequest:
+			log.Println("received a Full State Copy Request")
 			N.Send(msg.Sender, Rumour{
 				RequestType: FullStateCopyResponse,
 				Sender:      listenerSocket,
