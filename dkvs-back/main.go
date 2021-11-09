@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"io"
 	"time"
+
+	. "github.com/ofthegoats/dkvs/dkvs-back/node"
 )
 
 func main() {

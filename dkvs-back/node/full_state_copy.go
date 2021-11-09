@@ -1,9 +1,11 @@
-package main
+package node
 
 import (
 	"fmt"
 	"log"
 	"time"
+
+	. "github.com/ofthegoats/dkvs/dkvs-back/rumour"
 )
 
 // Request a full state copy from neighbour
@@ -14,7 +16,7 @@ func (N *Node) RequestCopy(neighbour string) error {
 	}
 	err := N.Send(neighbour, requestRumour)
 	if err != nil { // failed from this neighbour, not fatal but return error
-        log.Printf("%s: Failed to request FSC from %s\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
+		log.Printf("%s: Failed to request FSC from %s\n", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), neighbour)
 		return err
 	}
 	return nil

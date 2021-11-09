@@ -1,9 +1,11 @@
-package main
+package node
 
 import (
 	"fmt"
 	"log"
 	"time"
+
+	. "github.com/ofthegoats/dkvs/dkvs-back/rumour"
 )
 
 // Every `period` amount of time, send an RTT to a random node.
@@ -43,7 +45,7 @@ func (N *Node) RTTTimer(period time.Duration, RTTChan chan bool) error {
 					T:           0,
 				}
 				// send to self, hack that lets us get this to Gossip() easily, just with localhost
-                N.Send(fmt.Sprintf("tcp://127.0.0.1:%d", N.Port), suspicionRumour)
+				N.Send(fmt.Sprintf("tcp://127.0.0.1:%d", N.Port), suspicionRumour)
 			}
 		}
 	}

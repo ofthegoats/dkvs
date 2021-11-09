@@ -1,4 +1,4 @@
-package main
+package node
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"net/http"
 	"time"
 
 	"go.nanomsg.org/mangos/v3"
@@ -18,6 +17,8 @@ import (
 	"go.nanomsg.org/mangos/v3/protocol/req"
 
 	_ "go.nanomsg.org/mangos/v3/transport/all"
+
+	. "github.com/ofthegoats/dkvs/dkvs-back/rumour"
 )
 
 // The Node encapsulates the information we are interested in replicating. It also
@@ -139,8 +140,6 @@ func (N *Node) Gossip() error {
 	go N.Listen(listenerSocket, messages)
 	go N.RTTTimer(N.RTTPeriod, RTTChan)
 	go N.FullStateCopyTimer(N.FSCPeriod)
-	http.HandleFunc("/", N.webHandler)
-	go http.ListenAndServe(":8080", nil) // by default the webserver runs on port 8080
 	for {
 		msg := <-messages
 		switch msg.RequestType {

@@ -1,4 +1,4 @@
-package main
+package rumour
 
 const (
 	// UpdateData is a value to be used for RequestType

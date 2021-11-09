@@ -2,7 +2,7 @@
 //  This file should contain the smaller methods of Node  //
 ////////////////////////////////////////////////////////////
 
-package main
+package node
 
 import (
 	"encoding/json"
@@ -11,6 +11,8 @@ import (
 	"log"
 	"math"
 	"math/rand"
+
+	. "github.com/ofthegoats/dkvs/dkvs-back/rumour"
 )
 
 // Update the data present in data.json
