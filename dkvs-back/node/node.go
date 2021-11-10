@@ -150,6 +150,11 @@ func (N *Node) Gossip() error {
 				N.UpdateJson()
 			}
 			N.SendNextRound(msg)
+		case GetValueRequest:
+			N.Send(msg.Sender, Rumour{
+				RequestType: GetValueResponse,
+				NewValue:    N.Data[msg.Key], // if key does not exist, will be empty string
+			})
 		case RTTForward:
 			err := N.Send(msg.RTTTarget, Rumour{
 				RequestType: RTTRequest,

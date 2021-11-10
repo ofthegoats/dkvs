@@ -53,13 +53,28 @@ func main() {
 	)
 	messages := make(chan Rumour)
 	listener := fmt.Sprintf("tcp://localhost:%d", 9875)
+	backend := fmt.Sprintf("tcp://localhost:%s", port)
 	go n.Listen(listener, messages)
 	switch command {
-	default:
-		log.Fatalf("not a valid command: %s\n", command)
-	case "list-values":
-		n.RequestCopy(fmt.Sprintf("tcp://localhost:%s", port))
+	case "list-neighbours": // TODO
+	case "add-neighbour": // TODO
+	case "remove-neighbour": // TODO
+	case "list-values": // TODO
+		n.RequestCopy(backend)
 		fsc := <-messages
 		fmt.Printf("%v\n", fsc)
+	case "get-value":
+		key := os.Args[4]
+		n.Send(backend, Rumour{
+			RequestType: GetValueRequest,
+			Sender:      listener,
+			Key:         key,
+		})
+		v := <-messages
+		fmt.Printf("%v\n", v)
+	case "set-value": // TODO
+	case "die": // TODO
+	default:
+		log.Fatalf("not a valid command: %s\n", command)
 	}
 }
