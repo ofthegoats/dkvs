@@ -60,19 +60,39 @@ func main() {
 	case "add-neighbour": // TODO
 	case "remove-neighbour": // TODO
 	case "list-values": // TODO
-		n.RequestCopy(backend)
-		fsc := <-messages
-		fmt.Printf("%v\n", fsc)
+		err := n.RequestCopy(backend)
+		if err != nil {
+			log.Println(err)
+		} else {
+			fsc := <-messages
+			fmt.Printf("%v\n", fsc)
+		}
 	case "get-value":
-		key := os.Args[4]
-		n.Send(backend, Rumour{
+		k := os.Args[4]
+		err := n.Send(backend, Rumour{
 			RequestType: GetValueRequest,
 			Sender:      listener,
-			Key:         key,
+			Key:         k,
 		})
-		v := <-messages
-		fmt.Printf("%v\n", v)
-	case "set-value": // TODO
+		if err != nil {
+			log.Println(err)
+		} else {
+			v := <-messages
+			fmt.Printf("%v\n", v)
+		}
+	case "set-value":
+		k := os.Args[4]
+		v := os.Args[5]
+		err := n.Send(backend, Rumour{
+			RequestType: UpdateData,
+			Key:         k,
+			NewValue:    v,
+			T:           0,
+		})
+		if err != nil {
+			log.Println(err)
+		}
+		time.Sleep(1 * time.Second) // let send catch up
 	case "die": // TODO
 	default:
 		log.Fatalf("not a valid command: %s\n", command)
