@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	. "github.com/ofthegoats/dkvs/dkvs-back/node"
@@ -17,9 +18,10 @@ func main() {
 		tcptimeout, rttperiod, fscperiod,
 		9999, 5, 2,
 	)
+	n.MaxRounds = 2
 	go n.Gossip()
-	n.UpdateData("key", "val") // test data
 	for {
-		// inelegant infinite loop, replace with workgroups TODO
+		time.Sleep(2 * time.Second)
+		fmt.Println(n.Data)
 	}
 }
