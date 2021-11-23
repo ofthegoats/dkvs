@@ -47,6 +47,20 @@ func (N *Node) SendNextRound(msg Rumour) {
 	}
 }
 
+// Add a neighbour to a node, first making sure that the neighbour is not already stored
+func (N *Node) AddNeighbour(neighbour string) {
+	// make sure that the node does not currently exist
+	exists := false
+	for _, n := range N.Neighbours {
+		if n == neighbour {
+			exists = true
+		}
+	}
+	if !exists {
+		N.Neighbours = append(N.Neighbours, neighbour)
+	}
+}
+
 func (N *Node) RemoveNeighbour(neighbour string) {
 	index := 0
 	found := false
