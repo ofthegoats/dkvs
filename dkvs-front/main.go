@@ -56,10 +56,42 @@ func main() {
 	backend := fmt.Sprintf("tcp://localhost:%s", port)
 	go n.Listen(listener, messages)
 	switch command {
-	case "list-neighbours": // TODO
-	case "add-neighbour": // TODO
-	case "remove-neighbour": // TODO
-	case "list-values": // TODO
+	case "list-neighbours":
+		err := n.Send(backend, Rumour{
+			RequestType: GetNeighboursRequest,
+			Sender:      listener,
+		})
+		if err != nil {
+			log.Println(err)
+		} else {
+			neighbours := <-messages
+			fmt.Printf("%v\n", neighbours)
+		}
+	case "add-neighbour":
+		newNeighbour := os.Args[4]
+		err := n.Send(backend, Rumour{
+			RequestType: AddNeighbourRequest,
+			Sender:      listener,
+			NewValue:    newNeighbour,
+		})
+		if err != nil {
+			log.Println(err)
+		} else {
+			time.Sleep(1 * time.Second) // let send catch up
+		}
+	case "remove-neighbour":
+		toRemove := os.Args[4]
+		err := n.Send(backend, Rumour{
+			RequestType: DeleteNeighbourRequest,
+			Sender:      listener,
+			NewValue:    toRemove,
+		})
+		if err != nil {
+			log.Println(err)
+		} else {
+			time.Sleep(1 * time.Second) // let send catch up
+		}
+	case "list-values":
 		err := n.RequestCopy(backend)
 		if err != nil {
 			log.Println(err)

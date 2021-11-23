@@ -42,6 +42,26 @@ const (
 	// It is used for rumour which do not change the state of a node
 	// Instead the rumour is only used to show what the value of a key is.
 	GetValueResponse = "GET-VALUE-RESP"
+
+	// GetNeighboursRequest is a value to be used for RequestType
+	// It is to request a list of all the neighbours a node has
+	// This can be used when introducing a node to a network, or just by the frontend
+	GetNeighboursRequest = "GET-NEIGHBOURS-REQ"
+
+	// GetNeighboursResponse is a value to be used for RequestType
+	// It is used for responses that contain a list of neighbours
+	// This can be used when introducing a node to a network, or just by the frontend
+	GetNeighboursResponse = "GET-NEIGHBOURS-REP"
+
+	// AddNeighbourRequest is a value to be used for RequestType
+	// It is used to request a node to add a neighbour to its list of neighbours
+	// This is useful for the frontend and for introducing new nodes to a network
+	AddNeighbourRequest = "ADD-NEIGHBOUR"
+
+	// DeleteNeighbourRequest is a value to be used for RequestType
+	// It is used to request a node to delete a neighbour from its list of neighbours
+	// This is useful for the frontend and for handling suspicious or dying nodes
+	DeleteNeighbourRequest = "DELETE-NEIGHBOUR"
 )
 
 // The primary data structure which is communicated between Nodes
@@ -57,4 +77,6 @@ type Rumour struct {
 	RTTResponse bool   // true if suspcious, else false
 
 	FullState map[string]string // The full state of the data map, to be used for FSCs
+
+	Neighbours []string // The neighbours of the sending node
 }

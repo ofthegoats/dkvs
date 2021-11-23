@@ -149,7 +149,7 @@ func (N *Node) Gossip() error {
 				N.UpdateData(msg.Key, msg.NewValue)
 				N.UpdateJson()
 			}
-			N.SendNextRound(msg)
+			// N.SendNextRound(msg) // while testing, no n
 		case GetValueRequest:
 			N.Send(msg.Sender, Rumour{
 				RequestType: GetValueResponse,
@@ -181,6 +181,19 @@ func (N *Node) Gossip() error {
 			// Go does not support != between maps
 			N.Data = msg.FullState
 			N.UpdateJson()
+		case GetNeighboursRequest:
+			log.Println("received a Neighbours Copy Request")
+			N.Send(msg.Sender, Rumour{
+				RequestType: GetNeighboursResponse,
+				Sender:      listenerSocket,
+				Neighbours:  N.Neighbours,
+			})
+		case AddNeighbourRequest:
+			log.Println("received Add Neighbour Request: ", msg.NewValue)
+			N.AddNeighbour(msg.NewValue)
+		case DeleteNeighbourRequest:
+			log.Println("received Delete Neighbour Request: ", msg.NewValue)
+			N.RemoveNeighbour(msg.NewValue)
 		}
 	}
 }
