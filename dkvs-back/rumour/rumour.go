@@ -62,6 +62,11 @@ const (
 	// It is used to request a node to delete a neighbour from its list of neighbours
 	// This is useful for the frontend and for handling suspicious or dying nodes
 	DeleteNeighbourRequest = "DELETE-NEIGHBOUR"
+
+	// DieRequest is a value to be used for RequestType
+	// It is used to request a node to shut itself off
+	// This is useful for the frontend and for handling suspicious or dying nodes
+	DieRequest = "DIE-REQ"
 )
 
 // The primary data structure which is communicated between Nodes

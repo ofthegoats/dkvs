@@ -194,6 +194,16 @@ func (N *Node) Gossip() error {
 		case DeleteNeighbourRequest:
 			log.Println("received Delete Neighbour Request: ", msg.NewValue)
 			N.RemoveNeighbour(msg.NewValue)
+		case DieRequest:
+			for _, n := range N.Neighbours { // tell neighbours to remove this node
+				N.Send(n, Rumour{ // TODO waitgroups
+					RequestType: DeleteNeighbourRequest,
+					Sender:      listenerSocket,
+					NewValue:    listenerSocket,
+				})
+			}
+			time.Sleep(1 * time.Second) // let Send catch up
+			log.Fatalln("Node exited upon request: ", msg)
 		}
 	}
 }
