@@ -65,7 +65,7 @@ func main() {
 			log.Println(err)
 		} else {
 			neighbours := <-messages
-			fmt.Printf("%v\n", neighbours)
+			fmt.Printf("%v\n", neighbours.Neighbours)
 		}
 	case "add-neighbour":
 		newNeighbour := os.Args[4]
@@ -97,7 +97,7 @@ func main() {
 			log.Println(err)
 		} else {
 			fsc := <-messages
-			fmt.Printf("%v\n", fsc)
+			fmt.Printf("%v\n", fsc.FullState)
 		}
 	case "get-value":
 		k := os.Args[4]
@@ -110,7 +110,7 @@ func main() {
 			log.Println(err)
 		} else {
 			v := <-messages
-			fmt.Printf("%v\n", v)
+			fmt.Printf("%v\n", v.NewValue)
 		}
 	case "set-value":
 		k := os.Args[4]
