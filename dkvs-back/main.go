@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	. "github.com/ofthegoats/dkvs/dkvs-back/node"
@@ -21,7 +20,5 @@ func main() {
 	n.MaxRounds = 2
 	go n.Gossip()
 	for {
-		time.Sleep(2 * time.Second)
-		fmt.Println(n.Data)
 	}
 }
