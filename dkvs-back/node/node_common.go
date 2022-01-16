@@ -32,7 +32,7 @@ func (N *Node) UpdateJson() {
 func (N *Node) UpdateData(key, newvalue string) {
 	oldValue := N.Data[key]
 	N.Data[key] = newvalue // Change the existing value, or make a new one
-	log.Printf("%s :Updated \"%s\" FROM \"%s\" TO \"%s\"", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), key, oldValue, newvalue)
+	log.Printf("%s: Updated \"%s\" FROM \"%s\" TO \"%s\"", fmt.Sprintf("tcp://%s:%d", N.LANIP, N.Port), key, oldValue, newvalue)
 }
 
 func (N *Node) SendNextRound(msg Rumour) {
