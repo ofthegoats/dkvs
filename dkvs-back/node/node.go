@@ -168,6 +168,7 @@ func (N *Node) Gossip() error {
 		case RTTForwardResponse:
 			RTTChan <- msg.RTTResponse
 		case SuspiciousNode:
+			log.Println("removing suspicious neighbour: ", msg.RTTTarget)
 			N.RemoveNeighbour(msg.RTTTarget)
 			N.SendNextRound(msg)
 		case FullStateCopyRequest:
